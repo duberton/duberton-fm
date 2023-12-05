@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  localstack:
+    image: localstack/localstack:3.0.1
+    environment:
+      - SERVICES=apigateway,lambda,iam,dynamodb,logs
+      - DEBUG=1
+      - LAMBDA_REMOTE_DOCKER=true
+      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=4
+      - HOSTNAME_FROM_LAMBDA=localhost
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    ports:
+      - "4566:4566"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"

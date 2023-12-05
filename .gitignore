@@ -1,0 +1,56 @@
+# Ignore Terraform files
+/infrastructure/builds/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# Ignore Terraform provider binaries
+*terraform-provider-*
+
+# Ignore Python virtual environment
+venv/
+__pycache__/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Go binaries and executables
+*.exe
+*.out
+*.test
+*.prof
+*.test-prof
+**/bin/*
+
+# Ignore Go dependency directories
+vendor/
+
+# Ignore Go build cache
+*.cache
+
+# Ignore Go coverage profile
+*.cover
+
+# Ignore compiled Go files
+*.test
+*.prof
+
+# Ignore build artifacts
+*_build/
+*_output/
+
+# Ignore local state files for some Go testing frameworks
+*.gotest
+*.gotestsum
+
+**/.idea/
