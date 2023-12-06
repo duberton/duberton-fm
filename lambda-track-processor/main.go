@@ -28,6 +28,8 @@ type Item struct {
 	Sk        string `dynamodbav:"sk"`
 	Artist    string `dynamodbav:"artist"`
 	Title     string `dynamodbav:"title"`
+	Album     string `dynamodbav:"album"`
+	Id        string `dynamodbav:"id"`
 	Hash      string `dynamodbav:"hash"`
 	Timestamp string `dynamodbav:"timestamp"`
 }
@@ -35,6 +37,7 @@ type Item struct {
 type Song struct {
 	Artist string `json:"artist"`
 	Title  string `json:"title"`
+	Album  string `json:"album"`
 }
 
 func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventResponse, error) {
@@ -49,18 +52,21 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 			failures = append(failures, events.SQSBatchItemFailure{ItemIdentifier: record.MessageId})
 		}
 
-		log.Printf("Received record to track with the following body %s and message id %s", record.Body, record.MessageId)
+		log.Printf("Record with the following body %s and message id %s", record.Body, record.MessageId)
 
 		client := dynamodb.NewFromConfig(cfg)
 
-		hash := normalizeAndHash(song.Artist, song.Title)
+		artistAlbumHash := normalizeAndHash(song.Artist, song.Album)
+		id := uuid.NewString()
 
 		item := Item{
 			Pk:        fmt.Sprintf("%02d", time.Now().Day()),
-			Sk:        fmt.Sprintf("%02d-%d#%s", time.Now().Month(), time.Now().Year(), uuid.NewString()),
+			Sk:        fmt.Sprintf("%02d-%d#%s", time.Now().Month(), time.Now().Year(), id),
 			Artist:    song.Artist,
 			Title:     song.Title,
-			Hash:      hash,
+			Album:     song.Album,
+			Id:        id,
+			Hash:      artistAlbumHash,
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
