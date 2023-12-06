@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/google/uuid"
 )
 
 const (
@@ -22,6 +26,9 @@ const (
 type Item struct {
 	Pk        string `dynamodbav:"pk"`
 	Sk        string `dynamodbav:"sk"`
+	Artist    string `dynamodbav:"artist"`
+	Title     string `dynamodbav:"title"`
+	Hash      string `dynamodbav:"hash"`
 	Timestamp string `dynamodbav:"timestamp"`
 }
 
@@ -46,9 +53,14 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 
 		client := dynamodb.NewFromConfig(cfg)
 
+		hash := normalizeAndHash(song.Artist, song.Title)
+
 		item := Item{
-			Pk:        song.Artist,
-			Sk:        song.Title,
+			Pk:        fmt.Sprintf("%02d", time.Now().Day()),
+			Sk:        fmt.Sprintf("%02d-%d#%s", time.Now().Month(), time.Now().Year(), uuid.NewString()),
+			Artist:    song.Artist,
+			Title:     song.Title,
+			Hash:      hash,
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
@@ -76,6 +88,25 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 	log.Printf("Number of failures: %v", len(failures))
 
 	return events.SQSEventResponse{BatchItemFailures: failures}, nil
+}
+
+func normalizeAndHash(str1, str2 string) string {
+	normalizedStr1 := normalizeString(str1)
+	normalizedStr2 := normalizeString(str2)
+
+	combinedString := normalizedStr1 + normalizedStr2
+
+	hashedValue := sha256.Sum256([]byte(combinedString))
+
+	hashedString := fmt.Sprintf("%x", hashedValue)
+
+	return hashedString
+}
+
+func normalizeString(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "")
+	return s
 }
 
 func main() {

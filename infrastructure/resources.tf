@@ -112,7 +112,7 @@ resource "aws_sqs_queue" "duberton_fm_sqs" {
   policy = data.aws_iam_policy_document.duberton_fm_sqs_queue_policy.json
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.duberton_fm_sqs_dlq.arn
-    maxReceiveCount     = 2
+    maxReceiveCount     = 1
   })
 }
 
@@ -172,9 +172,10 @@ module "lambda" {
 
 
 resource "aws_lambda_event_source_mapping" "lambda_sqs_mapping" {
-  event_source_arn = aws_sqs_queue.duberton_fm_sqs.arn
-  function_name    = module.lambda.lambda_function_name
-  enabled          = true
+  event_source_arn        = aws_sqs_queue.duberton_fm_sqs.arn
+  function_name           = module.lambda.lambda_function_name
+  enabled                 = true
+  function_response_types = ["ReportBatchItemFailures"]
 }
 
 
