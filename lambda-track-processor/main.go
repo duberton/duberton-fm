@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -38,6 +36,7 @@ type Song struct {
 	Artist string `json:"artist"`
 	Title  string `json:"title"`
 	Album  string `json:"album"`
+	Hash   string `json:"hash"`
 }
 
 func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventResponse, error) {
@@ -54,9 +53,8 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 
 		log.Printf("Record with the following body %s and message id %s", record.Body, record.MessageId)
 
-		client := dynamodb.NewFromConfig(cfg)
+		dynamoDBClient := dynamodb.NewFromConfig(cfg)
 
-		artistAlbumHash := normalizeAndHash(song.Artist, song.Album)
 		id := uuid.NewString()
 
 		item := Item{
@@ -66,13 +64,13 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 			Title:     song.Title,
 			Album:     song.Album,
 			Id:        id,
-			Hash:      artistAlbumHash,
+			Hash:      song.Hash,
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
 		av, err := attributevalue.MarshalMap(item)
 
-		log.Printf("Attribute Value: %v", av)
+		log.Printf("DynamoDB attribute value: %v", av)
 
 		if err != nil {
 			log.Printf("Error marshalling item: %v", err)
@@ -84,7 +82,7 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 			Item:      av,
 		}
 
-		_, err = client.PutItem(ctx, putItemInput)
+		_, err = dynamoDBClient.PutItem(ctx, putItemInput)
 		if err != nil {
 			log.Printf("Error putting item into DynamoDB: %v", err)
 			failures = append(failures, events.SQSBatchItemFailure{ItemIdentifier: record.MessageId})
@@ -94,25 +92,6 @@ func handler(ctx context.Context, event events.SQSEvent) (events.SQSEventRespons
 	log.Printf("Number of failures: %v", len(failures))
 
 	return events.SQSEventResponse{BatchItemFailures: failures}, nil
-}
-
-func normalizeAndHash(str1, str2 string) string {
-	normalizedStr1 := normalizeString(str1)
-	normalizedStr2 := normalizeString(str2)
-
-	combinedString := normalizedStr1 + normalizedStr2
-
-	hashedValue := sha256.Sum256([]byte(combinedString))
-
-	hashedString := fmt.Sprintf("%x", hashedValue)
-
-	return hashedString
-}
-
-func normalizeString(s string) string {
-	s = strings.ToLower(s)
-	s = strings.ReplaceAll(s, " ", "")
-	return s
 }
 
 func main() {
