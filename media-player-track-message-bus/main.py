@@ -50,7 +50,7 @@ class PlayerManager:
 
     @staticmethod
     def normalize_and_encrypt_string(input_string):
-        normalized_string = input_string.lower().strip()
+        normalized_string = input_string.lower().strip().replace(" ", "")
         sha256_hash = hashlib.sha256(normalized_string.encode()).hexdigest()
         return sha256_hash
 
