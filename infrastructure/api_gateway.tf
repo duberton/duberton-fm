@@ -1,5 +1,7 @@
 data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_api_gateway_rest_api" "duberton_fm_rest_api" {
   name        = "duberton-fm"
   description = "duberton-fm API"
@@ -11,6 +13,8 @@ data "template_file" "tracks_openapi_file" {
     aws_sns_path_uri     = "arn:aws:apigateway:${data.aws_region.current.name}:sns:path//"
     api_gateway_role_arn = aws_iam_role.api_gateway_role.arn
     aws_sns_topic_arn    = aws_sns_topic.duberton_fm_topic.arn
+    cognito_user_pool_id = "arn:aws:cognito-idp:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:userpool/${aws_cognito_user_pool.user_pool.id}"
+
   })
 }
 

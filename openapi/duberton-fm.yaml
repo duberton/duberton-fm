@@ -6,10 +6,21 @@ info:
   version: "1.0"
 schemes:
   - https
-
+securityDefinitions:
+  oauth2:
+    type: apiKey
+    name: Authorization
+    in: header
+    x-amazon-apigateway-authtype: COGNITO_USER_POOLS
+    x-amazon-apigateway-authorizer:
+      type: COGNITO_USER_POOLS
+      providerARNs:
+        - "${cognito_user_pool_id}"
 paths:
   "/v1/tracks":
     post:
+      security:
+        - oauth2: [ "https://dubertonfm.com/write" ]
       tags:
         - track
       operationId: CreateTrack
