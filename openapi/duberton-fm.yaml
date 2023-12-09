@@ -1,0 +1,91 @@
+---
+swagger: "2.0"
+info:
+  description: duberton-fm API
+  title: duberton-fm
+  version: "1.0"
+schemes:
+  - https
+
+paths:
+  "/v1/tracks":
+    post:
+      tags:
+        - track
+      operationId: CreateTrack
+      summary: Create a track
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: NewTrack
+          required: true
+          schema:
+            "$ref": "#/definitions/CreateTrackRequest"
+      responses:
+        "200":
+          description: Success
+          schema:
+            "$ref": "#/definitions/CreateTrackResponse"
+      x-amazon-apigateway-request-validator: "post-track"
+      x-amazon-apigateway-integration:
+        uri: "${aws_sns_path_uri}"
+        credentials: "${api_gateway_role_arn}"
+        payloadFormatVersion: 1.0
+        httpMethod: POST
+        type: AWS
+        timeoutInMillis: 2000
+        requestParameters:
+          "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          "application/json": "Action=Publish&TopicArn=$util.urlEncode('${aws_sns_topic_arn}')&Message=$util.urlEncode($input.body)"
+        responses:
+          "200":
+            statusCode: "200"
+            responseTemplates:
+              application/json: '{"status": "SUCCESS"}'
+x-amazon-apigateway-request-validators:
+  post-track:
+    validateRequestParameters: false
+    validateRequestBody: true
+definitions:
+  Track:
+    type: object
+    properties:
+      id:
+        type: string
+      artist:
+        type: string
+      title:
+        type: string
+      album:
+        type: string
+      hash:
+        type: string
+  CreateTrackRequest:
+    type: object
+    required: [artist, title, album, hash]
+    properties:
+      artist:
+        type: string
+      title:
+        type: string
+      album:
+        type: string
+      hash:
+        type: string
+  CreateTrackResponse:
+    type: object
+    properties:
+      id:
+        type: string
+      artist:
+        type: string
+      title:
+        type: string
+      album:
+        type: string
+      hash:
+        type: string

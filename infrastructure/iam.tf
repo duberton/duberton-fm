@@ -17,7 +17,6 @@ resource "aws_iam_role" "api_gateway_role" {
 EOF
 }
 
-# Attach a policy to the IAM role allowing API Gateway to publish to SNS
 resource "aws_iam_policy" "api_gateway_policy" {
   name = "api-gateway-policy"
 
@@ -45,7 +44,6 @@ resource "aws_iam_role_policy_attachment" "api_gateway_attachment" {
 data "aws_iam_policy_document" "duberton_fm_sqs_queue_policy" {
 
   statement {
-    sid    = "example-sns-topic"
     effect = "Allow"
 
     principals {
@@ -58,7 +56,7 @@ data "aws_iam_policy_document" "duberton_fm_sqs_queue_policy" {
     ]
 
     resources = [
-      "*",
+      "*"
     ]
 
     condition {
