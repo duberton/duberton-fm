@@ -16,8 +16,11 @@ class PlayerManager:
 
     def __init__(self):
         self.api_gateway_endpoint = getenv('API_GW_ENDPOINT')
-        self.api_creation_path = '/create'
+        self.cognito_auth_domain = getenv('COGNITO_AUTH_DOMAIN')
+        self.api_creation_path = '/v1/tracks'
         self.s3 = boto3.client('s3')
+        self.client_id = getenv('COGNITO_CLIENT_ID')
+        self.client_secret = getenv('COGNITO_CLIENT_SECRET')
         loop = GLib.MainLoop()
         bus = dbus.SessionBus()
         bus.add_signal_receiver(handler_function=self.handler,
@@ -42,7 +45,7 @@ class PlayerManager:
 
         payload_json = json.dumps(payload)
 
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {self.token()}'}
 
         response = requests.post(f'{self.api_gateway_endpoint}{self.api_creation_path}', data=payload_json,
                                  headers=headers)
@@ -70,6 +73,17 @@ class PlayerManager:
     def upload_file(self, local_file, bucket_name, s3_file_key):
         print(f'Uploading file {local_file}')
         self.s3.upload_file(local_file, bucket_name, s3_file_key)
+
+    def token(self):
+
+        payload = {'grant_type': 'client_credentials', 'client_id': self.client_id,
+                   'client_secret': self.client_secret,
+                   'scope': 'https://dubertonfm.com/write'}
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        response = requests.request("POST", self.cognito_auth_domain, data=payload, headers=headers)
+
+        return response.json()['access_token']
 
 
 if __name__ == '__main__':

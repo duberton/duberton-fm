@@ -20,9 +20,9 @@ paths:
   "/v1/tracks":
     post:
       security:
-        - oauth2: [ "https://dubertonfm.com/write" ]
+        - oauth2: ["https://dubertonfm.com/write"]
       tags:
-        - track
+        - Tracks
       operationId: CreateTrack
       summary: Create a track
       consumes:
@@ -57,11 +57,53 @@ paths:
             statusCode: "200"
             responseTemplates:
               application/json: '{"status": "SUCCESS"}'
+    get:
+      tags:
+        - Tracks
+      operationId: GetTracks
+      summary: Get tracks
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: day
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: month
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: year
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          schema:
+            "$ref": "#/definitions/Tracks"
+      x-amazon-apigateway-integration:
+        uri: "${lambda_query_invoke_arn}"
+        credentials: "${api_gateway_role_arn}"
+        payloadFormatVersion: 1.0
+        httpMethod: POST
+        type: AWS_PROXY
+        timeoutInMillis: 2000
+        responses:
+          "200":
+            statusCode: "200"
 x-amazon-apigateway-request-validators:
   post-track:
     validateRequestParameters: false
     validateRequestBody: true
 definitions:
+  Tracks:
+    type: array
+    items:
+      "$ref": "#/definitions/Track"
   Track:
     type: object
     properties:

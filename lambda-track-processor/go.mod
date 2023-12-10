@@ -1,4 +1,4 @@
-module music-tracker-lambda
+module lambda-track-processor
 
 go 1.18
 

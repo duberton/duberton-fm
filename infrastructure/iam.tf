@@ -27,9 +27,10 @@ resource "aws_iam_policy" "api_gateway_policy" {
     {
       "Effect": "Allow",
       "Action": [
-        "sns:Publish"
+        "sns:Publish",
+        "lambda:InvokeFunction"
       ],
-      "Resource": "${aws_sns_topic.duberton_fm_topic.arn}"
+      "Resource": ["${aws_sns_topic.duberton_fm_topic.arn}", "${module.lambda_query.lambda_function_arn}"]
     }
   ]
 }
